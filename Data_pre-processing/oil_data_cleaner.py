@@ -1,7 +1,8 @@
+from typing import Union, Tuple, Optional, List, Iterator
 import numpy as np 
 import pandas as pd
 import matplotlib.pyplot as plt
-from typing import Union, Tuple, Optional, List, Iterator
+
 
 class OilDataCleaner:
 
@@ -291,6 +292,7 @@ class OilDataCleaner:
         series = self.data[series]
         num_windows = int(len(series) / window_size)
         print(f'Number of intervals: {num_windows}')
+
         # Check if the input series is a pandas Series object
         if not isinstance(series, pd.Series):
             raise TypeError(f"Input 'series' must be a pandas Series object, not {type(series)}")  
