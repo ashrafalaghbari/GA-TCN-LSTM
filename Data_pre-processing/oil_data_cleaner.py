@@ -1,10 +1,8 @@
 class OilDataCleaner:
-    def __init__(self, data):
-
+    def __init__(self, data: pd.DataFrame) -> None:
         self.data = data.copy()
-    
-    def __visualize_outliers(self, series, outliers):
 
+    def __visualize_outliers(self, series: pd.Series, outliers: pd.Series) -> None:
         # Set up the figure and axis
         fig, ax = plt.subplots(figsize=(18, 6))
 
@@ -13,7 +11,7 @@ class OilDataCleaner:
 
         # Plot vertical lines at the location of the outliers
         outlier_indices = outliers.index
-        ax.vlines(outlier_indices, ymin=series.min(), ymax=series.max(), color='red', label='Outliers',  alpha=0.3)
+        ax.vlines(outlier_indices, ymin=series.min(), ymax=series.max(), color='red', label='Outliers', alpha=0.3)
 
         # Add labels and legend
         ax.set_xlabel('Date')
@@ -23,8 +21,8 @@ class OilDataCleaner:
 
         # Show the plot
         plt.show()
-        
-    def find_on_stream_hrs_outliers(self, on_stream_var, rate_var):
+
+    def find_on_stream_hrs_outliers(self, on_stream_var: str, rate_var: str) -> pd.Series:
         # Cap the maximum value of ON_STREAM_HRS to 24
         outliers = self.data.loc[self.data[on_stream_var] > 24, on_stream_var]
         mask = (self.data[rate_var] == 0) & (self.data[on_stream_var] > 0)
@@ -32,24 +30,20 @@ class OilDataCleaner:
         self.__visualize_outliers(self.data[on_stream_var], outliers)
         return outliers
 
-    def find_rates_outliers(self, rate_var, on_stream_var):
-        
-        mask = (self.data[on_stream_var] == 0) & (self.data[rate_var] > 0) 
-        outliers = self.data.loc[mask , rate_var]
+    def find_rates_outliers(self, rate_var: str, on_stream_var: str) -> pd.Series:
+        mask = (self.data[on_stream_var] == 0) & (self.data[rate_var] > 0)
+        outliers = self.data.loc[mask, rate_var]
         self.__visualize_outliers(self.data[rate_var], outliers)
-        return outliers 
+        return outliers
 
- 
-
-    def find_choke_outliers(self, avg_choke_var, on_stream_var):
+    def find_choke_outliers(self, avg_choke_var: str, on_stream_var: str) -> pd.Series:
         # The average choke size should be set to zero when the well is off
         mask = self.data[on_stream_var] == 0
-        outliers = self.data.loc[mask, avg_choke_var] 
+        outliers = self.data.loc[mask, avg_choke_var]
         self.__visualize_outliers(self.data[avg_choke_var], outliers)
         return outliers
 
-
-    def __remove_extreme_outliers(self, series, thd_z_score=2):
+    def __remove_extreme_outliers(self, series: pd.Series, thd_z_score: Union[int, float] = 2) -> Tuple[pd.Series, pd.Series]:
         extreme_filtered_series = series.copy()
         outliers = extreme_filtered_series[extreme_filtered_series == 0]
         extreme_filtered_series[extreme_filtered_series == 0] = np.nan
@@ -59,7 +53,7 @@ class OilDataCleaner:
         extreme_filtered_series[abs_z_score > thd_z_score] = np.nan
         return extreme_filtered_series, outliers
 
-    def __get_window_mean(self, i, window_size, series):
+    def __get_window_mean(self, i: int, window_size: int, series: pd.Series) -> Tuple[float, pd.Series, int]:
         if i + 2 * window_size <= len(series):
             # If the last window is smaller than window_size, add it to the previous window
             window = series.iloc[i:i + window_size]
@@ -76,14 +70,14 @@ class OilDataCleaner:
         return window.mean(), window, i
 
 
-    def __get_window_outliers(self, window, mean, rate_of_change_window):
+    def __get_window_outliers(self, window: pd.Series, mean: float, rate_of_change_window: float) -> pd.Series:
         upper_bound = mean + rate_of_change_window
         lower_bound = mean - rate_of_change_window
         window_outliers = window.loc[(window < lower_bound) | (window > upper_bound)]
         return window_outliers
 
-    def __detect_outliers_with_thd_quantile(self, series, outliers, window_size, thd_quantile=.98, segments_start_date=None,
-                                    segments_end_date=None, segments_rate=None):
+    def __detect_outliers_with_thd_quantile(self, series: pd.Series, outliers: pd.Series, window_size: int,
+                                             thd_quantile: Union[int, float] = .98) -> pd.Series:
         for i in range(0, len(series), window_size):
             
             mean, window, i =  self.__get_window_mean(i, window_size, series)
@@ -99,7 +93,8 @@ class OilDataCleaner:
                 break
         return outliers
 
-    def __validate_rate_of_change(self, rate_of_change, all_same_rate, num_windows):
+    def __validate_rate_of_change(self, rate_of_change: Union[list, np.darray], all_same_rate: bool,
+                                   num_windows) -> Iterator:
         if not isinstance(rate_of_change, (list, np.ndarray)):
             raise ValueError("rate_of_change must be a list or an array.")
         
@@ -115,7 +110,10 @@ class OilDataCleaner:
             
             return iter(rate_of_change)
 
-    def __detect_outliers_with_rate_of_change(self, series, outliers, window_size, rate_of_change, all_same_rate=False):
+    def __detect_outliers_with_rate_of_change(self, series:pd.Series, outliers:pd.Series,
+                                               window_size: int,
+                                                 rate_of_change: Union[list[float, int], np.darray[float, int]],
+                                                   all_same_rate: bool= False) -> pd.Series:
         num_windows = int(np.ceil(len(series) / window_size))
         rate_of_change_iter = self.__validate_rate_of_change(rate_of_change, all_same_rate, num_windows)
         for i in range(0, len(series), window_size):
@@ -130,7 +128,11 @@ class OilDataCleaner:
         
         return outliers
 
-    def find_rate_of_change_outlier(self, series, window_size, thd_z_score=2, thd_quantile=0.98, rate_of_change=None, all_same_rate=False):
+    def find_rate_of_change_outlier(self, series: pd.Series, window_size: int, thd_z_score: int = 2,
+                                     thd_quantile: Union[float, int] = 0.98,
+                                     rate_of_change: Optional[Union[List[Union[float, int]], np.darray[Union[float, int]]]]=None
+                                     , all_same_rate: bool = False) -> pd.Series:
+
 
         series = self.data[series]
         # Check if the input series is a pandas Series object
