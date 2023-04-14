@@ -158,15 +158,44 @@ class OilDataCleaner:
             series: pd.Series, 
             thd_z_score: Union[int, float] = 2
     ) -> Tuple[pd.Series, pd.Series]:
+        """
+        Removes extreme outliers from a pandas Series object.
+        Extreme outliers are considered to be values of zero or dramatic drops in variables such as 
+        downhole pressure, downhole temperature, or wellhead temperature.
+        
+        For example, if Downhole_temperature = [200, 201, 200, 204, 199, 160, 0, 202], 
+        then 0 and 160 are deemed to be outliers for this variable.
 
+        This private method is called by detect_outliers_with_roc to detect such anomalous behavior.
+
+        Parameters:
+            series (pd.Series): The input pandas Series object from which to remove outliers.
+            thd_z_score (Union[int, float]): The threshold value for the Z-score above which data points are
+                                            considered extreme outliers. Defaults to 2.
+
+        Returns:
+            Tuple[pd.Series, pd.Series]: A tuple of two pandas Series objects:
+                                        - The first Series is the input Series with extreme outliers removed.
+                                        - The second Series contains the extreme outliers that were removed.
+        """
+        # Create a copy of the input series to avoid modifying the original.
         extreme_filtered_series = series.copy()
+        # Find any existing zeros in the series and consider them as outliers.
         outliers = extreme_filtered_series[extreme_filtered_series == 0]
+        # Replace zeros with NaN values so that they are excluded from the outlier detection process.
         extreme_filtered_series[extreme_filtered_series == 0] = np.nan
+        # Calculate the Z-score of each data point in the series.
         z_score = (extreme_filtered_series - extreme_filtered_series.mean()) / extreme_filtered_series.std()
+        # Calculate the absolute value of the Z-score.
         abs_z_score = abs(z_score)
+         # Find the data points whose Z-score exceeds the threshold value and consider them as outliers.
         outliers = pd.concat([outliers, extreme_filtered_series[abs_z_score > thd_z_score]])
+        # Replace the extreme outliers with NaN values so that they are excluded from the returned series.
         extreme_filtered_series[abs_z_score > thd_z_score] = np.nan
+        # Return the cleaned series and the extreme outliers.
         return extreme_filtered_series, outliers
+
+
 
     def __get_window_mean(
             self, 
@@ -174,21 +203,44 @@ class OilDataCleaner:
             window_size: int, 
             series: pd.Series
     ) -> Tuple[Union[float, int], pd.Series, int]:
-        """"""
+        """
+        Calculates the mean value of a window of data points in a pandas Series object.
+
+        This method calculates the mean value of a window of data points with a size of window_size, starting 
+        from the index i of the input pandas Series object. If there are enough data points in the Series object 
+        to form a complete window of size window_size, the method calculates the mean value of that window. If 
+        the number of data points is less than window_size, the method merges the last window with the previous 
+        one and calculates the mean value.
+
+        Parameters:
+            i (int): The index of the first data point in the window.
+            window_size (int): The number of data points to include in the window.
+            series (pd.Series): The pandas Series object containing the data points.
+
+        Returns:
+            Tuple[Union[float, int], pd.Series, int]: A tuple containing:
+            - The mean value of the window (either float or int).
+            - The pandas Series object representing the window.
+            - The index of the next data point after the window.
+        """
         if i + 2 * window_size <= len(series):
-            # If the last window is smaller than window_size, add it to the previous window
+            # If there are enough data points for a complete window
+            # Select the window and calculate its start and end dates
             window = series.iloc[i:i + window_size]
             start_date = self.data.iloc[i].name.strftime('%Y-%m-%d')
             end_date = self.data.iloc[i + window_size].name.strftime('%Y-%m-%d')
             i += window_size
         else:
-            # If there are less than window_size elements left, add them to the previous window
+            # If there are not enough data points for a complete window
+            # Merge the remaining data points with the last window
             window = series.iloc[i:]
             start_date = self.data.iloc[i].name.strftime('%Y-%m-%d')
             end_date = self.data.iloc[len(series) - 1].name.strftime('%Y-%m-%d')
             i = len(series)
         print(f"The rate of change for segment [{start_date}, {end_date}]", end='')
+        # Return the mean value of the window, the window itself, and the index of the next data point
         return window.mean(), window, i
+
 
 
     def __get_window_outliers(
@@ -197,32 +249,69 @@ class OilDataCleaner:
             mean: Union[float, int], 
             rate_of_change_window: Union[float, int]
     ) -> pd.Series:
-        
+        """
+        Returns a Series object containing the outliers of a given window of data points.
+
+        Outliers are defined as data points that fall outside of the upper and lower bounds, which are calculated
+        as the mean of the window plus or minus the rate of change threshold.
+
+        Parameters:
+            window (pd.Series): The pandas Series object representing the window of data points.
+            mean (Union[float, int]): The mean value of the window.
+            rate_of_change_window (Union[float, int]): The threshold value for the rate of change.
+
+        Returns:
+            pd.Series: A pandas Series object containing the outliers of the input window.
+        """
         upper_bound = mean + rate_of_change_window
         lower_bound = mean - rate_of_change_window
         window_outliers = window.loc[(window < lower_bound) | (window > upper_bound)]
         return window_outliers
 
     def __define_roc_with_quantile(
-            self, 
-            series: pd.Series, 
-            outliers: pd.Series, 
-            window_size: int,
-            thd_quantile: Union[int, float] = .98
+        self, 
+        series: pd.Series, 
+        outliers: pd.Series, 
+        window_size: int,
+        thd_quantile: Union[int, float] = .98
     ) -> pd.Series:
-        """"""
+        """
+        Determines the rate of change for each window of data points in a pandas Series object
+        using a given quantile value and identifies data points that are outliers.
+        This method is useful in case the user does not know the suitable rate of change for each window (interval)
+        For each window of data points with a size of window_size, the method calculates
+        the mean value and the rate of change, which is determined using the given quantile
+        value. Data points that are outliers are identified by comparing their values
+        to the calculated upper and lower bounds. The method returns a pandas Series object
+        containing the outliers.
+
+        Parameters:
+            series (pd.Series): The pandas Series object containing the data points.
+            outliers (pd.Series): A pandas Series object containing the data points that were
+                                previously identified as extreme outliers by __remove_extreme_outliers.
+            window_size (int): The number of data points to include in the window.
+            thd_quantile (Union[int, float]): The quantile value to use in calculating the rate
+                                            of change. Defaults to 0.98.
+
+        Returns:
+            pd.Series: A pandas Series object containing the data points that were 
+                extreme outliers and  outliers indentified by quantile rate of change.
+        """
         rate = list()
         i = 0
         while i < len(series):
+            # Calculate mean value and rate of change for the window
             mean, window, i =  self.__get_window_mean(i, window_size, series)
             diff_window = np.abs(np.diff(window))
             rate_of_change_window = np.nanquantile(diff_window, thd_quantile)
             rate.append(rate_of_change_window)
-            print(f' is {rate_of_change_window} with a mean of {mean}')
+            print(f'Rate of change for window ({i-window_size}, {i}) is {rate_of_change_window} with a mean of {mean}')
+            # Identify outliers in the window and add them to the list of outliers
             window_outliers = self.__get_window_outliers(window, mean, rate_of_change_window)
             outliers = pd.concat([outliers, window_outliers])
         print('Rate for each window of {} is: {}'.format(window_size,[round(x, 2) for x in rate]))
         return outliers
+
 
     def __validate_roc_input(
             self,
@@ -230,7 +319,21 @@ class OilDataCleaner:
             all_same_rate: bool,
             num_windows: int
     ) -> Iterator:
-        
+        """    Validates the input for rate of change and returns an iterator of the rate of change values.
+
+            Parameters:
+                rate_of_change (Union[list, np.ndarray]): A list or an array of rate of change values.
+                all_same_rate (bool): A flag to indicate whether all windows should have the same rate of change.
+                num_windows (int): The number of windows.
+
+            Returns:
+                Iterator: An iterator of the rate of change values.
+                
+            Raises:
+                ValueError: If the input rate_of_change is not a list or an array.
+                ValueError: If all_same_rate is True and rate_of_change does not contain exactly one value.
+                ValueError: If all_same_rate is False and the length of rate_of_change is not equal to num_windows.
+        """
         if not isinstance(rate_of_change, (list, np.ndarray)):
             raise ValueError("rate_of_change must be a list or an array.")
         if all_same_rate:
@@ -241,7 +344,6 @@ class OilDataCleaner:
             if len(rate_of_change) != num_windows:
                 raise ValueError(f"Length of rate_of_change ({len(rate_of_change)})"
                                     f"does not match the number of windows ({num_windows}).")
-            
             return iter(rate_of_change)
 
     def __define_roc_manually(
@@ -252,15 +354,46 @@ class OilDataCleaner:
             rate_of_change: Union[list[float], List[int], np.ndarray[float], np.ndarray[int]],
             all_same_rate: bool= False
     ) -> pd.Series:
+        """
+        Detect outliers based on the defined rate of change by the user.
 
+        The method first validates if the input rate of change conforms to the expected format. It then calculates 
+        the mean for each window of data points, and generates a boundary for each window based on the user-defined
+        rate of change and the calculated mean. Data points that fall outside these boundaries are identified as outliers.
+
+        Parameters:
+            series (pd.Series): A pandas Series object containing the data points.
+            outliers (pd.Series): A pandas Series object containing the data points that were
+                                  previously identified as extreme outliers by __remove_extreme_outliers.
+            window_size (int): The number of data points to include in the window.
+            num_windows (int): The number of windows in the series.
+            rate_of_change (Union[list[float], List[int], np.ndarray[float], np.ndarray[int]]):
+                A list or array of rate of change values defined by the user. If all_same_rate is True, this value
+                will be used for all windows. If all_same_rate is False, the rate_of_change value should be a list or 
+                array with length equal to num_windows.
+            all_same_rate (bool): If True, one user-defined value is used for all windows. If False, the rate_of_change 
+                                   value should be a list or array with length equal to num_windows. Default is False.
+
+        Returns:
+            pd.Series: A pandas Series object containing the extreme outliers and outliers that fall outside
+              the boundary defined by the user-defined rate of change.
+        """
+        # Validate the user-defined rate of change input
         rate_of_change_iter = self.__validate_roc_input(rate_of_change, all_same_rate, num_windows)
+        # Initialize window index
         i = 0
+         # Iterate through each window of the data
         while i < len(series):
+            # Calculate the mean and window of data points for the current window
             mean, window, i=  self.__get_window_mean(i, window_size, series)
+            # Get the rate of change value for the current window
             rate_of_change_window = next(rate_of_change_iter)
             print(f' is {rate_of_change_window} with a mean of {mean}')
+            # Get the outliers for the current window
             window_outliers = self.__get_window_outliers(window, mean, rate_of_change_window)
+            # Add the window outliers to the list of outliers
             outliers = pd.concat([outliers, window_outliers])
+             # Return the list of all outliers detected
         return outliers
 
     def detect_outliers_with_roc(
@@ -273,34 +406,46 @@ class OilDataCleaner:
             all_same_rate: bool = False,
     ) -> pd.Series:
         """
-        Detects outliers in a time series using either a rate of change or quantile threshold method.
+        Detects outliers in a time series variable
+        (e.g. downhole pressure, downhole temperature, or wellhead temperature)
+        by creating boundaries using the rate of change, either defined by the user or
+        calculated based on the rate of change of 98% of the data points in each window. 
+
+        The user has three options to determine the rate of change:
+        - Input the expected rate of change for each window.
+        - Use one value of rate of change for all windows.
+        - Determine the rate of change for each window based on the quantile.
 
         Parameters:
-            series (str): the name of the variable to detect outliers in
-            window_size (int): the size of the rolling window used for rate of change calculation (default=10)
-            thd_z_score (int): the threshold for extreme outliers (default=2)
-            thd_quantile (Union[float, int]): the threshold for quantile threshold detection (default=0.98)
-            rate_of_change (Optional[Union[List[Union[float, int]], np.ndarray[Union[float, int]]]]): the threshold 
-                for rate of change detection; if None, quantile threshold detection is used (default=None)
-            all_same_rate (bool): if True, all rates of change are the same, and the rate_of_change argument 
-                must be provided (default=False)
+            series (str): The name of the time series variable to be analyzed.
+            window_size (int): The number of data points to include in the window.
+            thd_z_score (int): The Z-score threshold value used to remove extreme outliers. Default is 2.
+            thd_quantile (Union[float, int]): The quantile threshold used to identify
+            outliers when rate of change is not used. Default is 0.98.
+            rate_of_change (Optional[Union[List[Union[float, int]], np.ndarray[Union[float, int]]]]):
+            A list or array of rate of change values defined by the user. If None, the quantile
+                threshold method is used. Default is None.
+            all_same_rate (bool): If True, one user defined value is used for all windows.
+            If False, the rate_of_change value should be a list or array with length equal
+                to the number of windows. Default is False.
 
         Returns:
-            pd.Series: a series containing the detected outliers
+            pd.Series: A pandas Series object containing the extreme outliers and
+            outliers that fall outside the boundary defined by the rate of change or quantile threshold.
+
         """
+        # Print the name of the variable being analyzed
         print('Variable: {}'.format(series))
+        # Retrieve the variable
         series = self.data[series]
+        # Determine the number of intervals (windows) in the data
         num_windows = int(len(series) / window_size)
         print(f'Number of intervals: {num_windows}')
-
         # Check if the input series is a pandas Series object
         if not isinstance(series, pd.Series):
             raise TypeError(f"Input 'series' must be a pandas Series object, not {type(series)}")  
-
         # Remove extreme outliers from the series using the remove_extreme_outliers function
-        extreme_filtered_series, outliers = self.__remove_extreme_outliers(series, thd_z_score) 
-
-                
+        extreme_filtered_series, outliers = self.__remove_extreme_outliers(series, thd_z_score)     
         # Detect outliers using either rate of change or quantile threshold
         if all_same_rate and rate_of_change is None:
             raise TypeError("If all rates of change are the same, the rate_of_change argument must be provided")
