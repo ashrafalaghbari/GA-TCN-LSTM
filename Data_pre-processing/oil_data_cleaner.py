@@ -7,9 +7,10 @@ import matplotlib.pyplot as plt
 class OilDataCleaner:
 
     """
-    This class is designed to identify and visualize outliers in time series data from oil wells.
-    We have tested the outlier detection capability of this class on a daily time series dataset
+    This class is designed to identify, visualize, and remove outliers in time series data from oil wells.
+    We have tested the outlier detection capability of this class on a daily time series dataset retrieved
       from the VOLVE field provided by Equinor (formerly known as Statoil).
+    `The index of the input DataFrame must be a pandas DatetimeIndex object.`
 
     The class can clean four types of variables:
 
@@ -17,22 +18,25 @@ class OilDataCleaner:
     - `rate_var`: Indicates the production rate, such as oil, water, or gas, and
       can also be used for injection rate, such as water injected volume.
     - `avg_choke_var`: Indicates the average choke size (valve) that controls the production rates.
-    - `roc`: Denotes the rate of change. The `detect_outliers_with_roc` function
-      can clean variables that behave in a relatively stable or gradual manner (e.g. average reservoir pressure
+    - `roc`: Denotes the rate of change. The `detect_outliers_with_roc` method in this class
+        can clean variables that behave in a relatively stable or gradual manner (e.g. average reservoir pressure
         and temperature and average wellhead temperature as well). 
 
-    This function works by identifying sudden movements that do not conform to 
-    the distribution of observations within the specified window. Each window contains
-      a certain number of observations selected based on the window size, which can be defined by the user.
+        The function, that detects outliers based on roc, works by identifying sudden movements that do not conform to 
+        the distribution of observations within the specified window. Each window contains
+        a certain number of observations selected based on the window size, which can be defined by the user.
 
-      The default values for all methods have been determined based on experimental results
-        and have been optimized for outlier detection.
+        The default values in all methods have been determined based on experimental results
+            and have been optimized for outlier detection and removal.However, the user can change the default values.
 
     Parameters:
+    ----------
         data (pd.DataFrame): The input DataFrame that contains the oil time series data to be cleaned.
 
     Attributes:
+    ----------
         data (pd.DataFrame): A copy of the input data.
+
     """
 
   
@@ -40,6 +44,8 @@ class OilDataCleaner:
         # Initializes the class instance with the input data passed as a pandas DataFrame
         # A copy of the input data is created to avoid modifying the original data outside of the class
         self.data = data.copy()
+
+
 
     def plot_outliers(
             self,
@@ -55,15 +61,18 @@ class OilDataCleaner:
         Visualizes the outliers in a time series variable.
 
         Parameters:
-            var (str): the name of the variable to visualize
-            outliers (pd.Series): the outliers to mark
-            color (str): color of the markers (default: 'red')
-            alpha (float): opacity of the markers (default: 0.3)
-            **kwargs: additional keyword arguments to pass to matplotlib.pyplot.vlines()
+        ----------
+            `var (str)`: the name of the variable to visualize
+            `outliers (pd.Series)`: the outliers to mark
+            `color (str)`: color of the markers (default: 'red')
+            `alpha (float)`: opacity of the markers (default: 0.3)
+            `**kwargs`: additional keyword arguments to pass to matplotlib.pyplot.vlines()
               to customize the outlier lines
 
         Returns:
-            None
+        -------
+            `None`
+
         """
         # Retrieve the variable of original time series 
         series = self.data[var] 
@@ -81,77 +90,126 @@ class OilDataCleaner:
         ax.legend(loc=legend_loc)
         plt.show()
 
+
+
     def detect_outliers_in_time(
             self, 
             on_stream_var: str, 
-            rate_var: str
-    ) -> pd.Series:
+            rate_var: str,
+            verbose: bool =False
+    ) -> Union[pd.Series, str]:
         """
         This function detects and returns outliers in the on-stream hours data for production and injection wells.
         
         Parameters:
-        - on_stream_var: a string representing the name of the on-stream hours variable in the dataset.
-        - rate_var: a string representing the name of the corresponding rate variable (e.g. oil, water, or gas production) in the dataset.
+        ----------
+            - `on_stream_var (str)`: The name of the variable in the dataset that represents on-stream hours.
+            - `rate_var (str)`: The name of the corresponding rate variable for the on-stream hours.
+            For example, if the on-stream hours variable represents production time, the rate variable could be oil rate.
+            Similarly, if the on-stream hours variable represents injection time for cleaning, the rate variable could be injected water volume.
         
         Returns:
+        -------
         - a pandas Series containing the outliers in the on-stream hours for production or inejction data.
+        - a string indicating that no outliers were detected.
+
         """
-        # Print the name of the variable being cleaned
-        print('Variable: {}'.format(on_stream_var))
-        # Cap the maximum value of ON_STREAM_HRS to 24
+        outliers = pd.Series()
+
+        # Cap the maximum value of on-stream hours to 24
         outliers = self.data.loc[self.data[on_stream_var] > 24, on_stream_var]
-        # if the rate variable is zero, the correponding on-stream-hrs should be zero as well
+
+        # If the rate variable is zero, the corresponding on-stream hours should also be zero
         mask = (self.data[rate_var] == 0) & (self.data[on_stream_var] > 0)
-        outliers = self.data.loc[mask, on_stream_var]
-        # Return the outliers
-        return outliers
+        outliers = pd.concat([outliers, self.data.loc[mask, on_stream_var]])
+
+        # Check if there are outliers
+        if outliers.empty:
+            
+            return "No outliers detected."
+        else:
+            # Print the name of the variable being analyzed
+            if verbose:
+                print('Variable: {}'.format(on_stream_var))
+            # Return outliers
+            return outliers.sort_index()
+
+
 
     def detect_outliers_in_rate(
             self, 
             rate_var: str, 
-            on_stream_var: str
-    ) -> pd.Series:
+            on_stream_var: str,
+            verbose: bool =False
+    ) -> Union[pd.Series, str]:
         """
         This method is used to detect outliers in production and injection rates.
 
         Parameters:
-            rate_var (str): The name of the variable indicating the production rate or inejction rates.
-            on_stream_var (str): The name of the variable indicating the corresponding on-stream hours.
+        ----------
+            `rate_var (str)`: The name of the variable indicating the production rate or inejction rates.
+            `on_stream_var (str)`: The name of the variable indicating the corresponding on-stream hours.
 
         Returns:
-            pd.Series: A series containing the identified outliers in the production or injection rates.
+        -------
+            `pd.Series`: A series containing the identified outliers in the production or injection rates.
+            `str`: A string indicating that no outliers were detected.
 
         """
-        # Print the name of the variable being cleaned
-        print('Variable: {}'.format(rate_var))
+        outliers = pd.Series()
         # Select data where the on-stream variable is zero and the rate variable is greater than zero
         mask = (self.data[on_stream_var] == 0) & (self.data[rate_var] > 0)
-        outliers = self.data.loc[mask, rate_var]
-        # Return the outliers
-        return outliers
+        outliers  = pd.concat([outliers, self.data.loc[mask, rate_var]])
+        
+        # Check if there are outliers
+        if outliers.empty:
+            
+            return "No outliers detected."
+        else:
+            if verbose:
+                # Print the name of the variable being analyzed
+                print('Variable: {}'.format(rate_var))
+            # Return outliers
+            return outliers.sort_index()
+
+
 
     def detect_outliers_in_choke(
             self, 
             avg_choke_var: str, 
-            on_stream_var: str
+            on_stream_var: str,
+            verbose: bool =False
     ) -> pd.Series:
         """
         Detects outliers in the average choke size variable in the production data.
         
         Parameters:
-            avg_choke_var (str): The name of the column containing the average choke size data.
-            on_stream_var (str): The name of the column containing the on-stream hours data.
+        ----------
+            `avg_choke_var (str)`: The name of the column containing the average choke size data.
+            `on_stream_var (str)`: The name of the column containing the on-stream hours data.
         
         Returns:
-            pd.Series: A series containing the outliers detected in the average choke size variable.
+        -------
+            `pd.Series`: A series containing the outliers detected in the average choke size variable.
+
         """
-        # Print the name of the variable being cleaned
-        print('Variable: {}'.format(avg_choke_var))
         # The average choke size should be set to zero when the well is off
-        mask = self.data[on_stream_var] == 0
+        mask = (self.data[on_stream_var] == 0) & (self.data[avg_choke_var] > 0)
+
         outliers = self.data.loc[mask, avg_choke_var]
-        # Return the outliers
-        return outliers
+
+        # Check if there are outliers
+        if outliers.empty:
+            
+            return "No outliers detected."
+        else:
+            # Return outliers
+            if verbose:
+                # Print the name of the variable being analyzed
+                print('Variable: {}'.format(avg_choke_var))
+            return outliers.sort_index()
+        
+
 
     def __remove_extreme_outliers(
             self, 
@@ -169,14 +227,17 @@ class OilDataCleaner:
         This private method is called by detect_outliers_with_roc to detect such anomalous behavior.
 
         Parameters:
-            series (pd.Series): The input pandas Series object from which to remove outliers.
-            thd_z_score (Union[int, float]): The threshold value for the Z-score above which data points are
+        ----------
+            `series (pd.Series)`: The input pandas Series object from which to remove outliers.
+            `thd_z_score (Union[int, float])`: The threshold value for the Z-score above which data points are
                                             considered extreme outliers. Defaults to 2.
 
         Returns:
-            Tuple[pd.Series, pd.Series]: A tuple of two pandas Series objects:
+        -------
+            `Tuple[pd.Series, pd.Series]`: A tuple of two pandas Series objects:
                                         - The first Series is the input Series with extreme outliers removed.
                                         - The second Series contains the extreme outliers that were removed.
+
         """
         # Create a copy of the input series to avoid modifying the original.
         extreme_filtered_series = series.copy()
@@ -201,7 +262,8 @@ class OilDataCleaner:
             self, 
             i: int, 
             window_size: int, 
-            series: pd.Series
+            series: pd.Series,
+            verbose: bool = False
     ) -> Tuple[Union[float, int], pd.Series, int]:
         """
         Calculates the mean value of a window of data points in a pandas Series object.
@@ -213,15 +275,18 @@ class OilDataCleaner:
         one and calculates the mean value.
 
         Parameters:
-            i (int): The index of the first data point in the window.
-            window_size (int): The number of data points to include in the window.
-            series (pd.Series): The pandas Series object containing the data points.
+        ----------
+            `i (int)`: The index of the first data point in the window.
+            `window_size (int)`: The number of data points to include in the window.
+            `series (pd.Series)`: The pandas Series object containing the data points.
 
         Returns:
-            Tuple[Union[float, int], pd.Series, int]: A tuple containing:
+        -------
+            `Tuple[Union[float, int], pd.Series, int]`: A tuple containing:
             - The mean value of the window (either float or int).
             - The pandas Series object representing the window.
             - The index of the next data point after the window.
+
         """
         if i + 2 * window_size <= len(series):
             # If there are enough data points for a complete window
@@ -237,7 +302,8 @@ class OilDataCleaner:
             start_date = self.data.iloc[i].name.strftime('%Y-%m-%d')
             end_date = self.data.iloc[len(series) - 1].name.strftime('%Y-%m-%d')
             i = len(series)
-        print(f"The rate of change for segment [{start_date}, {end_date}]", end='')
+        if verbose:
+            print(f"The rate of change for segment [{start_date}, {end_date}]", end='')
         # Return the mean value of the window, the window itself, and the index of the next data point
         return window.mean(), window, i
 
@@ -256,12 +322,15 @@ class OilDataCleaner:
         as the mean of the window plus or minus the rate of change threshold.
 
         Parameters:
-            window (pd.Series): The pandas Series object representing the window of data points.
-            mean (Union[float, int]): The mean value of the window.
-            rate_of_change_window (Union[float, int]): The threshold value for the rate of change.
+        ----------
+            `window (pd.Series)`: The pandas Series object representing the window of data points.
+            `mean (Union[float, int])`: The mean value of the window.
+            `rate_of_change_window (Union[float, int])`: The threshold value for the rate of change.
 
         Returns:
-            pd.Series: A pandas Series object containing the outliers of the input window.
+        -------
+            `pd.Series`: A pandas Series object containing the outliers of the input window.
+
         """
         upper_bound = mean + rate_of_change_window
         lower_bound = mean - rate_of_change_window
@@ -273,7 +342,8 @@ class OilDataCleaner:
         series: pd.Series, 
         outliers: pd.Series, 
         window_size: int,
-        thd_quantile: Union[int, float] = .98
+        thd_quantile: Union[int, float] = .98,
+        verbose: bool = False
     ) -> pd.Series:
         """
         Determines the rate of change for each window of data points in a pandas Series object
@@ -286,31 +356,39 @@ class OilDataCleaner:
         containing the outliers.
 
         Parameters:
-            series (pd.Series): The pandas Series object containing the data points.
-            outliers (pd.Series): A pandas Series object containing the data points that were
+        ----------
+            `series (pd.Series)`: The pandas Series object containing the data points.
+            `outliers (pd.Series)`: A pandas Series object containing the data points that were
                                 previously identified as extreme outliers by __remove_extreme_outliers.
-            window_size (int): The number of data points to include in the window.
-            thd_quantile (Union[int, float]): The quantile value to use in calculating the rate
+            `window_size (int)`: The number of data points to include in the window.
+            `thd_quantile (Union[int, float])`: The quantile value to use in calculating the rate
                                             of change. Defaults to 0.98.
+            
 
         Returns:
-            pd.Series: A pandas Series object containing the data points that were 
+        -------
+            `pd.Series`: A pandas Series object containing the data points that were 
                 extreme outliers and  outliers indentified by quantile rate of change.
+
         """
         rate = list()
         i = 0
         while i < len(series):
             # Calculate mean value and rate of change for the window
-            mean, window, i =  self.__get_window_mean(i, window_size, series)
+            mean, window, i = self.__get_window_mean(i, window_size, series, verbose)
             diff_window = np.abs(np.diff(window))
             rate_of_change_window = np.nanquantile(diff_window, thd_quantile)
             rate.append(rate_of_change_window)
-            print(f'Rate of change for window ({i-window_size}, {i}) is {rate_of_change_window} with a mean of {mean}')
+            if verbose:
+                print(f' is {np.round(rate_of_change_window, 2)} with a mean of {np.round(mean, 2)}')
             # Identify outliers in the window and add them to the list of outliers
             window_outliers = self.__get_window_outliers(window, mean, rate_of_change_window)
             outliers = pd.concat([outliers, window_outliers])
-        print('Rate for each window of {} is: {}'.format(window_size,[round(x, 2) for x in rate]))
+        if verbose:
+            print('Rate of change for each window of size {} is: {}'.format(window_size, [round(x, 2) for x in rate]))
         return outliers
+
+
 
 
     def __validate_roc_input(
@@ -321,18 +399,22 @@ class OilDataCleaner:
     ) -> Iterator:
         """    Validates the input for rate of change and returns an iterator of the rate of change values.
 
-            Parameters:
-                rate_of_change (Union[list, np.ndarray]): A list or an array of rate of change values.
-                all_same_rate (bool): A flag to indicate whether all windows should have the same rate of change.
-                num_windows (int): The number of windows.
+        Parameters:
+        ----------
+            `rate_of_change (Union[list, np.ndarray])`: A list or an array of rate of change values.
+            `all_same_rate (bool)`: A flag to indicate whether all windows should have the same rate of change.
+            `num_windows (int)`: The number of windows.
 
-            Returns:
-                Iterator: An iterator of the rate of change values.
-                
-            Raises:
-                ValueError: If the input rate_of_change is not a list or an array.
-                ValueError: If all_same_rate is True and rate_of_change does not contain exactly one value.
-                ValueError: If all_same_rate is False and the length of rate_of_change is not equal to num_windows.
+        Returns:
+        -------
+            Iterator: An iterator of the rate of change values.
+            
+        Raises:
+        ------
+            ValueError: If the input rate_of_change is not a list or an array.
+            ValueError: If all_same_rate is True and rate_of_change does not contain exactly one value.
+            ValueError: If all_same_rate is False and the length of rate_of_change is not equal to num_windows.
+
         """
         if not isinstance(rate_of_change, (list, np.ndarray)):
             raise ValueError("rate_of_change must be a list or an array.")
@@ -346,13 +428,17 @@ class OilDataCleaner:
                                     f"does not match the number of windows ({num_windows}).")
             return iter(rate_of_change)
 
+
+
     def __define_roc_manually(
-            self,series: pd.Series,
+            self,
+            series: pd.Series,
             outliers: pd.Series,
             window_size: int,
             num_windows: int,
             rate_of_change: Union[list[float], List[int], np.ndarray[float], np.ndarray[int]],
-            all_same_rate: bool= False
+            all_same_rate: bool= False,
+            verbose: bool = False
     ) -> pd.Series:
         """
         Detect outliers based on the defined rate of change by the user.
@@ -362,21 +448,25 @@ class OilDataCleaner:
         rate of change and the calculated mean. Data points that fall outside these boundaries are identified as outliers.
 
         Parameters:
-            series (pd.Series): A pandas Series object containing the data points.
-            outliers (pd.Series): A pandas Series object containing the data points that were
+        ----------
+            `series (pd.Series)`: A pandas Series object containing the data points.
+            `outliers (pd.Series)`: A pandas Series object containing the data points that were
                                   previously identified as extreme outliers by __remove_extreme_outliers.
-            window_size (int): The number of data points to include in the window.
-            num_windows (int): The number of windows in the series.
-            rate_of_change (Union[list[float], List[int], np.ndarray[float], np.ndarray[int]]):
+            `window_size (int)`: The number of data points to include in the window.
+            `num_windows (int)`: The number of windows in the series.
+            `rate_of_change (Union[list[float], List[int], np.ndarray[float], np.ndarray[int]])`:
                 A list or array of rate of change values defined by the user. If all_same_rate is True, this value
                 will be used for all windows. If all_same_rate is False, the rate_of_change value should be a list or 
                 array with length equal to num_windows.
-            all_same_rate (bool): If True, one user-defined value is used for all windows. If False, the rate_of_change 
+            `all_same_rate (bool)`: If True, one user-defined value is used for all windows. If False, the rate_of_change 
                                    value should be a list or array with length equal to num_windows. Default is False.
+            `verbose (bool)`: If True, prints the rate of change for each window. Default is False.
 
         Returns:
-            pd.Series: A pandas Series object containing the extreme outliers and outliers that fall outside
+        -------
+            `pd.Series`: A pandas Series object containing the extreme outliers and outliers that fall outside
               the boundary defined by the user-defined rate of change.
+
         """
         # Validate the user-defined rate of change input
         rate_of_change_iter = self.__validate_roc_input(rate_of_change, all_same_rate, num_windows)
@@ -385,16 +475,19 @@ class OilDataCleaner:
          # Iterate through each window of the data
         while i < len(series):
             # Calculate the mean and window of data points for the current window
-            mean, window, i=  self.__get_window_mean(i, window_size, series)
+            mean, window, i=  self.__get_window_mean(i, window_size, series, verbose)
             # Get the rate of change value for the current window
             rate_of_change_window = next(rate_of_change_iter)
-            print(f' is {rate_of_change_window} with a mean of {mean}')
+            if verbose:
+                print(f' is {np.round(rate_of_change_window, 2)} with a mean of {np.round(mean,2)}')
             # Get the outliers for the current window
             window_outliers = self.__get_window_outliers(window, mean, rate_of_change_window)
             # Add the window outliers to the list of outliers
             outliers = pd.concat([outliers, window_outliers])
              # Return the list of all outliers detected
         return outliers
+
+
 
     def detect_outliers_with_roc(
             self,
@@ -404,6 +497,7 @@ class OilDataCleaner:
             thd_quantile: Union[float, int] = 0.98,
             rate_of_change: Optional[Union[List[Union[float, int]], np.ndarray[Union[float, int]]]] = None,
             all_same_rate: bool = False,
+            verbose: bool = False
     ) -> pd.Series:
         """
         Detects outliers in a time series variable
@@ -417,30 +511,33 @@ class OilDataCleaner:
         - Determine the rate of change for each window based on the quantile.
 
         Parameters:
-            series (str): The name of the time series variable to be analyzed.
-            window_size (int): The number of data points to include in the window.
-            thd_z_score (int): The Z-score threshold value used to remove extreme outliers. Default is 2.
-            thd_quantile (Union[float, int]): The quantile threshold used to identify
+        ----------
+            `series (str)`: The name of the time series variable to be analyzed.
+            `window_size (int)`: The number of data points to include in the window.
+            `thd_z_score (int)`: The Z-score threshold value used to remove extreme outliers. Default is 2.
+            `thd_quantile (Union[float, int])`: The quantile threshold used to identify
             outliers when rate of change is not used. Default is 0.98.
-            rate_of_change (Optional[Union[List[Union[float, int]], np.ndarray[Union[float, int]]]]):
+            `rate_of_change (Optional[Union[List[Union[float, int]], np.ndarray[Union[float, int]]]])`:
             A list or array of rate of change values defined by the user. If None, the quantile
-                threshold method is used. Default is None.
-            all_same_rate (bool): If True, one user defined value is used for all windows.
-            If False, the rate_of_change value should be a list or array with length equal
-                to the number of windows. Default is False.
+                threshold method is used. Default is None. 
+            `all_same_rate (bool)`: If True, the same user-defined rate of change value is used for all windows.
+            The user should input only one value, which will be used to calculate the outliers
+            for all windows. If False, the rate_of_change value should be a list or array with 
+            length equal to the number of windows. The default value is False.
+            `verbose (bool)`: If True, the function prints the rate of change value for each window. Default is False.
 
         Returns:
-            pd.Series: A pandas Series object containing the extreme outliers and
+        ----------
+            `pd.Series`: A pandas Series object containing the extreme outliers and
             outliers that fall outside the boundary defined by the rate of change or quantile threshold.
 
         """
-        # Print the name of the variable being analyzed
-        print('Variable: {}'.format(series))
         # Retrieve the variable
         series = self.data[series]
         # Determine the number of intervals (windows) in the data
         num_windows = int(len(series) / window_size)
-        print(f'Number of intervals: {num_windows}')
+        if verbose:
+            print(f'Number of intervals: {num_windows}')
         # Check if the input series is a pandas Series object
         if not isinstance(series, pd.Series):
             raise TypeError(f"Input 'series' must be a pandas Series object, not {type(series)}")  
@@ -450,10 +547,156 @@ class OilDataCleaner:
         if all_same_rate and rate_of_change is None:
             raise TypeError("If all rates of change are the same, the rate_of_change argument must be provided")
         elif rate_of_change is None:
-            outliers = self.__define_roc_with_quantile(extreme_filtered_series, outliers, window_size, thd_quantile)
+            outliers = self.__define_roc_with_quantile(extreme_filtered_series, 
+                                                       outliers, window_size, 
+                                                       thd_quantile,
+                                                       verbose)
         else:
-            outliers = self.__define_roc_manually(extreme_filtered_series, outliers, window_size,
-                                                  num_windows, rate_of_change, all_same_rate)  
-        # Sort and return the outliers
-        return outliers.sort_index()
+            outliers = self.__define_roc_manually(extreme_filtered_series, 
+                                                  outliers, 
+                                                  window_size,
+                                                  num_windows, 
+                                                  rate_of_change, 
+                                                  all_same_rate,
+                                                  verbose)  
+        # Check if there are outliers
+        if outliers.empty:
+            
+            return "No outliers detected."
+        else:
+            # Return outliers
+            if verbose:
+                # Print the name of the variable being analyzed
+                print('Variable: {}'.format(series.name))
+            return outliers.sort_index()
+        
+
+
+    def treat_outliers_in_time(
+            self, 
+            data: pd.DataFrame,
+            on_stream_var: str,
+            rate_var: str,
+            intp_method: str = 'linear'
+    )-> pd.Series:
+        """
+        Treats outliers in the on-stream hours variable by capping the maximum value at 24 hours
+        and setting the on-stream hours to zero if the rate is zero.
+
+        Parameters:
+        ----------
+            `data (pd.DataFrame)`: The dataframe containing the on-stream hours and rate variables.
+            `on_stream_var (str)`: The name of the on-stream hours variable.
+            `rate_var (str)`: The name of the rate variable.
+            `intp_method (str)`: The interpolation method used to fill in missing values. Default is 'linear'.
+
+        Returns:
+        ----------
+            `pd.Series`: A pandas Series object containing the treated on-stream hours variable.
+
+        """
+        # Cap the maximum value of on-stream hours to 24
+        data.loc[data[on_stream_var] > 24, on_stream_var] = 24
+
+        # If the rate variable is zero, the corresponding on-stream hours should also be zero
+        mask = (data[rate_var] == 0) & (data[on_stream_var] > 0)
+        data.loc[mask, on_stream_var] = 0
+        data[on_stream_var] = data[on_stream_var].interpolate(method=intp_method, limit_direction='both')
+        # Return the on-stream hours variable
+        return data[on_stream_var]
+    
+
+
+    def treat_outliers_in_rate(
+            self, 
+            data: pd.DataFrame, 
+            rate_var: str, 
+            on_stream_var: str,
+            intp_method: str = 'linear'
+    )-> pd.Series:
+        """
+        Treats outliers in the rate variable by setting the rate to zero if the on-stream hours is zero.
+
+        Parameters:
+        ----------
+            `data (pd.DataFrame)`: The dataframe containing the on-stream hours and rate variables.
+            `rate_var (str)`: The name of the rate variable.
+            `on_stream_var (str)`: The name of the on-stream hours variable.
+            `intp_method (str)`: The interpolation method used to fill in missing values. Default is 'linear'.
+
+        Returns:
+        ----------
+            `pd.Series`: A pandas Series object containing the treated rate variable.
+
+        """
+        # If the on-stream hours variable is zero, the corresponding rate should also be zero
+        mask = (data[on_stream_var] == 0) & (data[rate_var] > 0)
+        # Set the rate to zero
+        data.loc[mask, rate_var] = 0
+        # Interpolate the rate variable
+        data[rate_var] = data[rate_var].interpolate(method=intp_method, limit_direction='both')
+        # Return the rate variable
+        return data[rate_var]
+    
+
+
+    def treat_outliers_with_roc(
+            self, 
+            data: pd.DataFrame, 
+            var: str, 
+            roc_outliers: pd.Series, 
+            intp_method: str = 'linear'
+    )-> pd.Series:
+        """
+        Treats outliers in a time series variable by interpolating the values of the outliers.
+
+        Parameters:
+        ----------
+            `data (pd.DataFrame)`: The dataframe containing the variable to be analyzed.
+            `var (str)`: The name of the variable to be treated.
+            `roc_outliers (pd.Series)`: A pandas Series object containing the outliers detected using the rate of change method.
+            `intp_method (str)`: The interpolation method to be used. Default is 'linear'.
+
+        Returns:
+        ----------
+            `pd.Series`: A pandas Series object containing the variable with the outliers interpolated.
+        
+        """
+        # Setting the outliers to NaN
+        data[var][roc_outliers.index] = np.nan
+        # Interpolating the values of the outliers
+        data[var] = data[var].interpolate(method=intp_method, limit_direction='both')
+        # Return the variable
+        return data[var]
+    
+    def treat_outliers_in_choke(
+            self, 
+            data: pd.DataFrame,
+            avg_choke_var: str,
+            on_stream_var: str,
+            intp_method: str = 'linear'
+    )-> pd.Series:
+        """
+        Cleans outliers in the average choke variable by setting the average choke to zero if the on-stream hours is zero.
+
+        Parameters:
+        ----------
+            `data (pd.DataFrame)`: The dataframe containing the on-stream hours and average choke variables.
+            `avg_choke_var (str)`: The name of the average choke variable.
+            `on_stream_var (str)`: The name of the on-stream hours variable.
+            `intp_method (str)`: The interpolation method used to fill in missing values. Default is 'linear'.
+
+        Returns:
+        ----------
+            `pd.Series`: A pandas Series object containing the cleaned average choke variable.
+
+        """
+        # If the on-stream hours variable is zero, the corresponding average choke should also be zero
+        mask = (data[on_stream_var] == 0) & (data[avg_choke_var] > 0)
+        # Set the average choke to zero
+        data.loc[mask, avg_choke_var] = 0
+        # Interpolate the average choke variable
+        data[avg_choke_var] = data[avg_choke_var].interpolate(method=intp_method, limit_direction='both')
+        # Return the average choke variable
+        return data[avg_choke_var]
 
