@@ -52,8 +52,8 @@ After cleaning the data, we used it as input to our proposed and reference model
 | GRU            | 209.33    | 5.48     | 125.06   | 0.92      |
 | RNN            | 214.71    | 5.66     | 129.36   | 0.92      |
 
-![](GA-TCN-LSTM\GA-TCN-LSTM actual and predicted values  on training and testing sets.png)
 
+![GA-TCN-LSTM actual and predicted values  on training and testing sets](https://user-images.githubusercontent.com/98224412/235141680-040e7590-02e8-4346-b2bc-7680b3cca971.png)
 
 
 
