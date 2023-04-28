@@ -153,7 +153,7 @@ GA-TCN-LSTM
 
 Contributions are always welcome!
 
-See `contributing.md` for ways to get started.
+See [contributing.md](https://github.com/ashrafalaghbari/GA-TCN-LSTM/blob/main/contributing.md) for ways to get started.
 
 
 
