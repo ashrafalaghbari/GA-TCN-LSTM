@@ -1,5 +1,4 @@
 
-<<<<<<< HEAD
 # MULTIVARIATE TIME SERIES FORECASTING OF OIL PRODUCTION BASED ON ENSEMBLE DEEP LEARNING AND GENETIC ALGORITHM
 
 This project focuses on developing a forecasting model for oil production using advanced machine learning techniques and optimization algorithms. The project includes the development of a Genetic Algorithm- Temporal Convolutional Neural Network- Long Short-Term Memory (GA-TCN-LSTM) ensemble model, as well as benchmarking against conventional models such as Recurrent Neural Network (RNN), Gated Recurrent Unit (GRU), Long Short-Term Memory (LSTM), and Temporal Convolutional Network (TCN).
@@ -52,8 +51,10 @@ After cleaning the data, we used it as input to our proposed and reference model
 | GRU            | 209.33    | 5.48     | 125.06   | 0.92      |
 | RNN            | 214.71    | 5.66     | 129.36   | 0.92      |
 
+<img src="https://user-images.githubusercontent.com/98224412/235143302-00ebbd39-c977-4ce5-8b3c-abcd3a528c70.jpg" alt="GA-TCN-LSTM actual and predicted values on training and testing sets" width="700" height="400">
 
-![GA-TCN-LSTM actual and predicted values  on training and testing sets](https://user-images.githubusercontent.com/98224412/235141680-040e7590-02e8-4346-b2bc-7680b3cca971.png)
+
+
 
 
 
@@ -113,8 +114,6 @@ clean.plot_outliers('BORE_GAS_VOL', BORE_GAS_VOL_outliers)
 df['BORE_GAS_VOL'] = clean.treat_outliers_in_rate(data, 'BORE_GAS_VOL', 'ON_STREAM_HRS')
 ```
 
-Please note that this project was developed using `Python 3.10.7`. If you encounter any compatibility issues, try using the same version of Python.
-
 To use the `OilDataCleaner module`, users can refer to the file itself as everything is documented there. To see examples of using this module, users can refer to the data cleaning file in `/data_preprocessing/data_cleaning.ipynb`, as it was used to clean the dataset and exemplify the usage.
 
 That's it! You should now be able to use the `GA-TCN-LSTM` forecasting model, run the Jupyter Notebooks, and use the `OilDataCleaner` module.
@@ -126,9 +125,9 @@ GA-TCN-LSTM
 =======
 
 
->>>>>>> 7fd128ea412d09d09478df23ffbb064e6aaa909f
 
-[![Made with Python](https://img.shields.io/badge/Made%20with-Python-blue.svg)](https://www.python.org/)
+
+[![Made with Python](https://img.shields.io/badge/Made%20with-Python%203.10.7-blue.svg)](https://www.python.org/)
 
 
 [<img target="_blank" src="https://www.fullstackpython.com/img/logos/scipy.png" width=100>](https://scipy.org/) [<img target="_blank" src="https://keras.io/img/logo.png" width=100>](https://keras.io/) [<img target="_blank" src="https://matplotlib.org/stable/_static/logo2_compressed.svg" width=100>](https://matplotlib.org/stable/index.html) [<img target="_blank" src="https://seaborn.pydata.org/_images/logo-wide-lightbg.svg" width=100>](https://seaborn.pydata.org/)
