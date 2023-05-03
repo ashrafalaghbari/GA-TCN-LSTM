@@ -60,6 +60,8 @@ class OilDataCleaner:
             self,
             var: str,
             outliers: pd.Series,
+            color: str = 'red',
+            alpha: float = 0.3,
             **kwargs
     ) -> None:
 
@@ -80,9 +82,6 @@ class OilDataCleaner:
             `None`
 
         """
-        # Extract values from kwargs with default values if not provided
-        color = kwargs.get('color', 'red')
-        alpha = kwargs.get('alpha', 0.3)
         # Retrieve the variable of original time series
         series = self.data[var]
         # Set up the figure and axis
@@ -105,7 +104,7 @@ class OilDataCleaner:
             self,
             on_stream_var: str,
             rate_var: str,
-            **kwargs
+            verbose: bool = False
     ) -> Union[pd.Series, str]:
         """
         This function detects and returns outliers in the on-stream hours
@@ -129,8 +128,6 @@ class OilDataCleaner:
         - a string indicating that no outliers were detected.
 
         """
-        # Extract values from kwargs with default values if not provided
-        verbose = kwargs.get('verbose', False)
         outliers = pd.Series()
 
         # Cap the maximum value of on-stream hours to 24
@@ -156,7 +153,7 @@ class OilDataCleaner:
             self,
             rate_var: str,
             on_stream_var: str,
-            **kwargs
+            verbose: bool = False
     ) -> Union[pd.Series, str]:
         """
         This method is used to detect outliers in production and injection rates.
@@ -175,8 +172,6 @@ class OilDataCleaner:
             `str`: A string indicating that no outliers were detected.
 
         """
-        # Extract values from kwargs with default values if not provided
-        verbose = kwargs.get('verbose', False)
         outliers = pd.Series()
         # Select data where the on-stream variable is zero and
         #  the rate variable is greater than zero.
@@ -199,7 +194,7 @@ class OilDataCleaner:
             self,
             avg_choke_var: str,
             on_stream_var: str,
-            **kwargs
+            verbose: bool = False
     ) -> pd.Series:
         """
         Detects outliers in the average choke size variable in the production data.
@@ -215,8 +210,6 @@ class OilDataCleaner:
               the average choke size variable.
 
         """
-        # Extract values from kwargs with default values if not provided
-        verbose = kwargs.get('verbose', False)
         # The average choke size should be set to zero when the well is off
         mask = (self.data[on_stream_var] == 0) & (self.data[avg_choke_var] > 0)
 
@@ -293,7 +286,8 @@ class OilDataCleaner:
             self,
             i: int,
             series: pd.Series,
-            **kwargs
+            window_size: int,
+            verbose: bool = False
     ) -> Tuple[Union[float, int], pd.Series, int]:
         """
         Calculates the mean value of a window of data points in a pandas Series object.
@@ -322,9 +316,6 @@ class OilDataCleaner:
             - The index of the next data point after the window.
 
         """
-        # Extract values from kwargs with default values if not provided
-        window_size = kwargs.get('window_size')
-        verbose = kwargs.get('verbose', False)
         if i + 2 * window_size <= len(series):
             # If there are enough data points for a complete window
             # Select the window and calculate its start and end dates
@@ -381,8 +372,9 @@ class OilDataCleaner:
         self,
         series: pd.Series,
         outliers: pd.Series,
+        window_size: int,
         thd_quantile: Union[int, float] = .98,
-        **kwargs
+        verbose: bool = False
     ) -> pd.Series:
         """
         Determines the rate of change for each window of data points
@@ -413,9 +405,6 @@ class OilDataCleaner:
 
         """
         # Extract values from kwargs with default values if not provided
-        window_size = kwargs.get('window_size')
-        verbose = kwargs.get('verbose', False)
-
         rate = []
         i = 0
         while i < len(series):
@@ -446,7 +435,8 @@ class OilDataCleaner:
     def __validate_roc_input(
             self,
             rate_of_change: Union[list, np.ndarray],
-            **kwargs
+            num_windows: int,
+            all_same_rate: bool
     ) -> Iterator:
         """    Validates the input for rate of change and returns an iterator
           of the rate of change values.
@@ -472,10 +462,6 @@ class OilDataCleaner:
               is not equal to num_windows.
 
         """
-        # Extract values from kwargs with default values if not provided
-        num_windows = kwargs.get('num_windows')
-        all_same_rate = kwargs.get('all_same_rate', False)
-
         if not isinstance(rate_of_change, (list, np.ndarray)):
             raise ValueError("rate_of_change must be a list or an array.")
         if all_same_rate:
@@ -494,7 +480,11 @@ class OilDataCleaner:
             self,
             series: pd.Series,
             outliers: pd.Series,
-            **kwargs
+            window_size: int,
+            num_windows: int,
+            rate_of_change: Union[list, np.ndarray],
+            all_same_rate: bool = False,
+            verbose: bool = False
     ) -> pd.Series:
         """
         Detect outliers based on the defined rate of change by the user.
@@ -531,14 +521,6 @@ class OilDataCleaner:
                 the user-defined rate of change.
 
         """
-
-        # Extract values from kwargs with default values if not provided
-        window_size = kwargs.get('window_size')
-        num_windows = kwargs.get('num_windows')
-        rate_of_change = kwargs.get('rate_of_change', [])
-        all_same_rate = kwargs.get('all_same_rate', False)
-        verbose = kwargs.get('verbose', False)
-
         # Validate the user-defined rate of change input
         rate_of_change_iter = self.__validate_roc_input(rate_of_change,
                                                         all_same_rate,
@@ -569,7 +551,11 @@ class OilDataCleaner:
             self,
             series: str,
             window_size: int,
-            **kwargs
+            thd_z_score: int = 2,
+            thd_quantile: Union[float, int] = 0.98,
+            rate_of_change: Union[list, np.ndarray] = None,
+            all_same_rate: bool = False,
+            verbose: bool = False
     ) -> pd.Series:
         """
         Detects outliers in variables(e.g. downhole pressure, downhole temperature,
@@ -609,14 +595,6 @@ class OilDataCleaner:
               defined by the rate of change or quantile threshold.
 
         """
-
-         # Extract values from kwargs with default values if not provided
-        thd_quantile = kwargs.get('thd_quantile', 0.98)
-        thd_z_score = kwargs.get('thd_z_score', 2)
-        rate_of_change = kwargs.get('rate_of_change', [])
-        all_same_rate = kwargs.get('all_same_rate', False)
-        verbose = kwargs.get('verbose', False)
-
         # Retrieve the variable
         series = self.data[series]
         # Determine the number of intervals (windows) in the data
