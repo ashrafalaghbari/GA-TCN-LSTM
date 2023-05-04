@@ -11,8 +11,8 @@ Additionally, the project includes exploratory data analysis and data cleaning u
 Oil production forecasting is a critical task for many oil and gas companies, governments, and policy-makers. Accurate forecasts are essential for planning and decision-making, such as determining production rates, managing inventory, and estimating future revenue.
 
 Conventional oil production forecasting methods have limitations due to the complexity and non-linear relationships in the data. Therefore, the use of advanced machine learning techniques and optimization algorithms can improve the accuracy of forecasts by accounting for these complexities and identifying the optimal combination of hyperparameters for each model. This project aims to provide decision-makers with better information to make informed decisions and improve the overall forecasting process.
-## Methodology
-In this project, we followed a systematic approach to obtain and process the required oil well data. Initially, we extracted the necessary data from the `raw_data.xlsx` file. Next, we conducted exploratory data analysis (EDA) to better understand the characteristics of the data. The resulting dataset was then saved with the name `F_14.csv,` which includes production and injection data that significantly affect the well's production. We performed data cleaning on `F_14.csv` using our custom module, `oil_data_cleaner.py,` and saved the cleaned data to a file named `cleaned_F_14.csv.`
+## Workflow
+In this project, we followed a systematic approach to obtain and process the required oil well data. Initially, we extracted the necessary data from the `raw_data.xlsx` file. Next, we conducted exploratory data analysis (EDA) to better understand the characteristics of the data. The resulting dataset was then saved with the name `F_14.csv,` which includes production and injection data that significantly affect the well's production. We performed data cleaning on `F_14.csv` using our custom module, `odc.py,` and saved the cleaned data to a file named `cleaned_F_14.csv.`
 
 After cleaning the data, we used it as input to our proposed and reference models for forecasting. All datasets used in this project can be found in the `/datasets` folder, and the EDA and data cleaning process can be found in the `/data_preprocessing` folder. Finally, the modeling process, including the proposed and reference models, is documented in the `/modeling` folder.
 
@@ -36,10 +36,6 @@ After cleaning the data, we used it as input to our proposed and reference model
         ├── LSTM_model.ipynb
         ├── RNN_model.ipynb
         ├── TCN_model.ipynb
-
-
-
-
 ```
 ## Evaluation
 
@@ -87,31 +83,43 @@ You may need to install `Git` on your system if it's not already installed to cl
 ```bash
 pip install -r requirements.txt
 ```
-3. Run the Jupyter files and the `oil_data_cleaner.py` module.
+3. Run the Jupyter files and the `odc.py` module.
 
-If you only want to use the `oil_data_cleaner` module, click on the `oil_data_cleaner.py` file and copy and paste the code into a text editor. Save the file with a `.py` extension and install the necessary dependencies, which are `numpy, pandas, and matplotlib.pyplot` by running:
+If you only want to use the `odc` module, click on the `odc.py` file and copy and paste the code into a text editor. Save the file with a `.py` extension and install the necessary dependencies, which are `numpy, pandas, and matplotlib.pyplot` by running:
 ```bash
 pip install numpy pandas matplotlib.pyplot
 ```
-4. To use the developed module for outliers treatment, import the `OilDataCleaner class` in your Python code or Jupyter Notebook by including the following statement at the beginning of your script:
+4. To use the developed module for outliers treatment, import the `DetectOutliers class` in your Python code or Jupyter Notebook by including the following statement at the beginning of your script:
 
 ```bash
 from oil_data_cleaner import OilDataCleaner
 ```
 Examples:
 
-```bash
-# Create an instance of the OilDataCleaner class
-clean = OilDataCleaner(df)
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from odc import DetectOutliers
 
-# Detect outliers in BORE_GAS_VOL variable
-BORE_GAS_VOL_outliers = clean.detect_outliers_in_rate('BORE_GAS_VOL', 'ON_STREAM_HRS')
+df = pd.read_csv("F_14.csv", parse_dates=["DATEPRD"], index_col="DATEPRD")
 
-# Plot the detected outliers
-clean.plot_outliers('BORE_GAS_VOL', BORE_GAS_VOL_outliers)
+# Creating an instance of the DetectOutliers class and passing the df DataFrame as an argument
+clean = DetectOutliers(df)
 
-# Treat the outliers
-df['BORE_GAS_VOL'] = clean.treat_outliers_in_rate(data, 'BORE_GAS_VOL', 'ON_STREAM_HRS')
+# Detecting outliers in the 'ON_STREAM_HRS' variable
+ON_STREAM_HRS_outliers = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
+print("Outliers detected in ON_STREAM_HRS variable:\n", ON_STREAM_HRS_outliers)
+
+# Plotting the outliers detected in the 'ON_STREAM_HRS' variable
+clean.plot_outliers(ON_STREAM_HRS_outliers)
+
+# Treating outliers in the 'ON_STREAM_HRS' variable
+df['ON_STREAM_HRS'] = clean.treat_outliers_in_time()
+
+outliers_after_treatment = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
+print("Outliers detected in ON_STREAM_HRS variable after treatment:\n", outliers_after_treatment)
+
 ```
 
 To use the `OilDataCleaner module`, users can refer to the file itself as everything is documented there. To see examples of using this module, users can refer to the data cleaning file in `/data_preprocessing/data_cleaning.ipynb`, as it was used to clean the dataset and exemplify the usage.
