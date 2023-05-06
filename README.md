@@ -101,11 +101,9 @@ If you only want to use the `odc` module, click on the `odc.py` file and copy an
 ```bash
 pip install numpy pandas matplotlib.pyplot
 ```
-4. To use the developed module for outliers treatment, import the `DetectOutliers class` in your Python code or Jupyter Notebook by including the following statement at the beginning of your script:
 
-```bash
-from oil_data_cleaner import OilDataCleaner
-```
+This is an example of how to use the odc module for detecting and treating outliers in a dataset.
+
 Examples:
 
 ```python
@@ -113,26 +111,63 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from odc import DetectOutliers
+```
 
+
+```python
 df = pd.read_csv("F_14.csv", parse_dates=["DATEPRD"], index_col="DATEPRD")
+```
 
+
+```python
 # Creating an instance of the DetectOutliers class and passing the df DataFrame as an argument
 clean = DetectOutliers(df)
+```
 
+
+```python
 # Detecting outliers in the 'ON_STREAM_HRS' variable
 ON_STREAM_HRS_outliers = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
 print("Outliers detected in ON_STREAM_HRS variable:\n", ON_STREAM_HRS_outliers)
+```
 
+    Outliers detected in ON_STREAM_HRS variable:
+     DATEPRD
+    2010-10-31    25.00000
+    2012-09-15     0.95833
+    2013-10-27    24.30833
+    2014-10-26    25.00000
+    Name: ON_STREAM_HRS, dtype: float64
+
+
+
+```python
 # Plotting the outliers detected in the 'ON_STREAM_HRS' variable
 clean.plot_outliers(ON_STREAM_HRS_outliers)
+```
 
+
+
+![png](test_files/test_4_0.png)
+
+
+
+
+```python
 # Treating outliers in the 'ON_STREAM_HRS' variable
 df['ON_STREAM_HRS'] = clean.treat_outliers_in_time()
+```
 
+
+```python
 outliers_after_treatment = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
 print("Outliers detected in ON_STREAM_HRS variable after treatment:\n", outliers_after_treatment)
-
 ```
+
+    Outliers detected in ON_STREAM_HRS variable after treatment:
+     No outliers detected.
+
+
 
 To use the `OilDataCleaner module`, users can refer to the file itself as everything is documented there. To see examples of using this module, users can refer to the data cleaning file in `/data_preprocessing/data_cleaning.ipynb`, as it was used to clean the dataset and exemplify the usage.
 
