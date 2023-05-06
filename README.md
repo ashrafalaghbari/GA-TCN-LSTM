@@ -154,7 +154,7 @@ GA-TCN-LSTM
 - [Multivariate Time Series Forecasting with LSTMs in Keras](https://machinelearningmastery.com/multivariate-time-series-forecasting-lstms-keras/)
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+[MIT](https://github.com/ashrafalaghbari/GA-TCN-LSTM/blob/main/license)
 
 
 ## Contributing
