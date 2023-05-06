@@ -1,5 +1,6 @@
 
-# MULTIVARIATE TIME SERIES FORECASTING OF OIL PRODUCTION BASED ON ENSEMBLE DEEP LEARNING AND GENETIC ALGORITHM
+# Multivariate Time Series Forecasting of Oil Production Based on Ensemble Deep Learning and Genetic Algorithm
+
 
 This project focuses on developing a forecasting model for oil production using advanced machine learning techniques and optimization algorithms. The project includes the development of a Genetic Algorithm- Temporal Convolutional Neural Network- Long Short-Term Memory (GA-TCN-LSTM) ensemble model, as well as benchmarking against conventional models such as Recurrent Neural Network (RNN), Gated Recurrent Unit (GRU), Long Short-Term Memory (LSTM), and Temporal Convolutional Network (TCN).
 
@@ -162,6 +163,10 @@ GA-TCN-LSTM
 Contributions are always welcome!
 
 See [contributing.md](https://github.com/ashrafalaghbari/GA-TCN-LSTM/blob/main/contributing.md) for ways to get started.
+
+## Contact
+
+If you have any questions or encounter any issues running this project, please feel free to [open an issue](https://github.com/ashrafalaghbari/Data-Viz/issues) or contact me directly at [ashrafalaghbari@hotmail.com](mailto:ashrafalaghbari@hotmail.com). I'll be happy to help!
 
 
 
