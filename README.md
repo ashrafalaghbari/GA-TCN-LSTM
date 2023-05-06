@@ -147,8 +147,7 @@ clean.plot_outliers(ON_STREAM_HRS_outliers)
 ```
 
 
-
-![png](test_files/test_4_0.png)
+![test_4_0](https://user-images.githubusercontent.com/98224412/236640490-ae183998-86ec-4911-8df2-1c56d0892211.png)
 
 
 
