@@ -50,6 +50,17 @@ After cleaning the data, we used it as input to our proposed and reference model
 
 <img src="https://user-images.githubusercontent.com/98224412/235143302-00ebbd39-c977-4ce5-8b3c-abcd3a528c70.jpg" alt="GA-TCN-LSTM actual and predicted values on training and testing sets" width="700" height="400">
 
+## View Notebooks in Colab
+
+| Notebook | Colab Link |
+| -------- | ---------- |
+| Exploratory Data Analysis | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/data_preprocessing/EDA.ipynb) |
+| Data Cleaning | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/data_preprocessing/data_cleaning.ipynb) |
+| Proposed Model (GA-TCN-LSTM) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/Proposed_model/GA_TCN_LSTM_model.ipynb) |
+| Reference Model (TCN) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/Reference_models/TCN_model.ipynb) |
+| Reference Model (LSTM) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/Reference_models/LSTM_model.ipynb) |
+| Reference Model (GRU)| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/Reference_models/GRU_model.ipynb) |
+| Reference Model (RNN) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/Reference_models/RNN_model.ipynb) |
 
 
 
