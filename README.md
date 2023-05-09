@@ -130,6 +130,7 @@ clean = DetectOutliers(df)
 ON_STREAM_HRS_outliers = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
 print("Outliers detected in ON_STREAM_HRS variable:\n", ON_STREAM_HRS_outliers)
 ```
+Output:
 
     Outliers detected in ON_STREAM_HRS variable:
      DATEPRD
@@ -145,6 +146,7 @@ print("Outliers detected in ON_STREAM_HRS variable:\n", ON_STREAM_HRS_outliers)
 # Plotting the outliers detected in the 'ON_STREAM_HRS' variable
 clean.plot_outliers(ON_STREAM_HRS_outliers)
 ```
+Output:
 
 
 ![test_4_0](https://user-images.githubusercontent.com/98224412/236640490-ae183998-86ec-4911-8df2-1c56d0892211.png)
@@ -162,6 +164,7 @@ df['ON_STREAM_HRS'] = clean.treat_outliers_in_time()
 outliers_after_treatment = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
 print("Outliers detected in ON_STREAM_HRS variable after treatment:\n", outliers_after_treatment)
 ```
+Output:
 
     Outliers detected in ON_STREAM_HRS variable after treatment:
      No outliers detected.
