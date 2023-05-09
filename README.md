@@ -4,14 +4,14 @@
 
 This project focuses on developing a forecasting model for oil production using advanced machine learning techniques and optimization algorithms. The project includes the development of a Genetic Algorithm- Temporal Convolutional Neural Network- Long Short-Term Memory (GA-TCN-LSTM) ensemble model, as well as benchmarking against conventional models such as Recurrent Neural Network (RNN), Gated Recurrent Unit (GRU), Long Short-Term Memory (LSTM), and Temporal Convolutional Network (TCN).
 
-Additionally, the project includes exploratory data analysis and data cleaning using our custom-built oil_data_cleaner module. The  module is designed to detect, visualize, and treat outliers in oil well datasets.
+Additionally, the project includes exploratory data analysis and data cleaning using our custom-built odc module. The  module is designed to detect, visualize, and treat outliers in oil well datasets and is readily available in the odc repository.
 
 
 
 ## Motivation
 Oil production forecasting is a critical task for many oil and gas companies, governments, and policy-makers. Accurate forecasts are essential for planning and decision-making, such as determining production rates, managing inventory, and estimating future revenue.
 
-Conventional oil production forecasting methods have limitations due to the complexity and non-linear relationships in the data. Therefore, the use of advanced machine learning techniques and optimization algorithms can improve the accuracy of forecasts by accounting for these complexities and identifying the optimal combination of hyperparameters for each model. This project aims to provide decision-makers with better information to make informed decisions and improve the overall forecasting process.
+Conventional oil production forecasting methods have limitations due to complex data, high uncertainty, and failure to reflect the actual system and dynamic changes.. Therefore, the use of advanced machine learning techniques and optimization algorithms can improve the accuracy of forecasts by accounting for these complexities and identifying the optimal combination of hyperparameters for each model. This project aims to provide decision-makers with better information to make informed decisions and improve the overall forecasting process.
 ## Workflow
 In this project, we followed a systematic approach to obtain and process the required oil well data. Initially, we extracted the necessary data from the `raw_data.xlsx` file. Next, we conducted exploratory data analysis (EDA) to better understand the characteristics of the data. The resulting dataset was then saved with the name `F_14.csv,` which includes production and injection data that significantly affect the well's production. We performed data cleaning on `F_14.csv` using our custom module, `odc.py,` and saved the cleaned data to a file named `cleaned_F_14.csv.`
 
@@ -73,107 +73,7 @@ The `raw_data.xlsx` file used in this project was provided by Equinor (formerly 
 To access the dataset, please visit the following link: https://www.equinor.com/energy/volve-data-sharing. Once on the page, select the "Go to the Volve dataset: data.equinor.com" option and follow the instructions to obtain the `raw_data.xlsx` file.
 
 Please note that the raw data is subject to the terms and conditions outlined on the Equinor website.
-## Installation
 
-To use the GA-TCN-LSTM forecasting model and other components of this project, please follow the steps below:
-
-1. Clone the GitHub repository to your local machine using the following command in your terminal or command prompt:
-
-```bash
-git clone https://github.com/ashrafalaghbari/GA-TCN-LSTM.git
-```
-
-You may need to install `Git` on your system if it's not already installed to clone the GitHub repository. If you don't want to use `Git` to clone the GitHub repository, you can download the project's source code as a ZIP archive from the project's GitHub page.
-
-- Click on the green `Code` button, and then click on `Download ZIP` to download the project as a ZIP archive.
-- Extract the ZIP archive to a folder on your local machine.
-- Open your terminal or command prompt, and navigate to the folder - where you extracted the ZIP archive.
-- Continue with step 2.
-
-2. Set up the required environment by installing the necessary packages in `requirements.txt`. Users can install the dependencies by running:
-
-```bash
-pip install -r requirements.txt
-```
-3. Run the Jupyter files and the `odc.py` module.
-
-If you only want to use the `odc` module, click on the `odc.py` file and copy and paste the code into a text editor. Save the file with a `.py` extension and install the necessary dependencies, which are `numpy, pandas, and matplotlib.pyplot` by running:
-```bash
-pip install numpy pandas matplotlib.pyplot
-```
-
-This is an example of how to use the odc module for detecting and treating outliers in a dataset.
-
-Examples:
-
-```python
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from odc import DetectOutliers
-```
-
-
-```python
-df = pd.read_csv("F_14.csv", parse_dates=["DATEPRD"], index_col="DATEPRD")
-```
-
-
-```python
-# Creating an instance of the DetectOutliers class and passing the df DataFrame as an argument
-clean = DetectOutliers(df)
-```
-
-
-```python
-# Detecting outliers in the 'ON_STREAM_HRS' variable
-ON_STREAM_HRS_outliers = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
-print("Outliers detected in ON_STREAM_HRS variable:\n", ON_STREAM_HRS_outliers)
-```
-Output:
-
-    Outliers detected in ON_STREAM_HRS variable:
-     DATEPRD
-    2010-10-31    25.00000
-    2012-09-15     0.95833
-    2013-10-27    24.30833
-    2014-10-26    25.00000
-    Name: ON_STREAM_HRS, dtype: float64
-
-
-
-```python
-# Plotting the outliers detected in the 'ON_STREAM_HRS' variable
-clean.plot_outliers(ON_STREAM_HRS_outliers)
-```
-Output:
-
-
-![test_4_0](https://user-images.githubusercontent.com/98224412/236640490-ae183998-86ec-4911-8df2-1c56d0892211.png)
-
-
-
-
-```python
-# Treating outliers in the 'ON_STREAM_HRS' variable
-df['ON_STREAM_HRS'] = clean.treat_outliers_in_time()
-```
-
-
-```python
-outliers_after_treatment = clean.detect_outliers_in_time('ON_STREAM_HRS', 'BORE_OIL_VOL')
-print("Outliers detected in ON_STREAM_HRS variable after treatment:\n", outliers_after_treatment)
-```
-Output:
-
-    Outliers detected in ON_STREAM_HRS variable after treatment:
-     No outliers detected.
-
-
-
-To use the `OilDataCleaner module`, users can refer to the file itself as everything is documented there. To see examples of using this module, users can refer to the data cleaning file in `/data_preprocessing/data_cleaning.ipynb`, as it was used to clean the dataset and exemplify the usage.
-
-That's it! You should now be able to use the `GA-TCN-LSTM` forecasting model, run the Jupyter Notebooks, and use the `OilDataCleaner` module.
 ## Tech Stack
 
 
@@ -197,7 +97,6 @@ GA-TCN-LSTM
 
 
 
-
 ## Credits
 - [Simple Genetic Algorithm From Scratch in Python](https://machinelearningmastery.com/simple-genetic-algorithm-from-scratch-in-python/)
 - [Multivariate Time Series Forecasting with LSTMs in Keras](https://machinelearningmastery.com/multivariate-time-series-forecasting-lstms-keras/)
@@ -205,12 +104,6 @@ GA-TCN-LSTM
 
 [MIT](https://github.com/ashrafalaghbari/GA-TCN-LSTM/blob/main/license)
 
-
-## Contributing
-
-Contributions are always welcome!
-
-See [contributing.md](https://github.com/ashrafalaghbari/GA-TCN-LSTM/blob/main/contributing.md) for ways to get started.
 
 ## Contact
 
