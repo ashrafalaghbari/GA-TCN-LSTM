@@ -22,6 +22,7 @@ After cleaning the data, we used it as input to our proposed and reference model
 ├── .gitignore
 ├── requirements.txt
 ├── README.md
+├── license
 ├── data_preprocessing
 │   ├── eda
 │   └── data_cleaning
