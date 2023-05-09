@@ -4,7 +4,7 @@
 
 This project focuses on developing a forecasting model for oil production using advanced machine learning techniques and optimization algorithms. The project includes the development of a Genetic Algorithm- Temporal Convolutional Neural Network- Long Short-Term Memory (GA-TCN-LSTM) ensemble model, as well as benchmarking against conventional models such as Recurrent Neural Network (RNN), Gated Recurrent Unit (GRU), Long Short-Term Memory (LSTM), and Temporal Convolutional Network (TCN).
 
-Additionally, the project includes exploratory data analysis and data cleaning using our custom-built odc module. The  module is designed to detect, visualize, and treat outliers in oil well datasets and is readily available in the odc repository.
+Additionally, the project includes exploratory data analysis and data cleaning using our custom-built `odc module`. The  module is designed to detect, visualize, and treat outliers in oil well datasets and is readily available in the odc repository.
 
 
 
