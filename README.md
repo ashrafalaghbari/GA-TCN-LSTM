@@ -57,8 +57,8 @@ After cleaning the data, we used it as input to our proposed and reference model
 | -------- | ---------- |
 | Exploratory Data Analysis | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/data_preprocessing/eda.ipynb) |
 | Data Cleaning | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/data_preprocessing/data_cleaning.ipynb) |
-| Proposed Model (GA-TCN-LSTM) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/modeling/reference_models/GA_TCN_LSTM_model.ipynb) |
-| Reference Model (TCN) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/Reference_models/TCN_model.ipynb) |
+| Proposed Model (GA-TCN-LSTM) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/modeling/proposed_model/GA_TCN_LSTM_model.ipynb) |
+| Reference Model (TCN) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/reference_models/TCN_model.ipynb) |
 | Reference Model (LSTM) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/modeling/reference_models/LSTM_model.ipynb) |
 | Reference Model (GRU)| [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/modeling/reference_models/GRU_model.ipynb) |
 | Reference Model (RNN) | [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ashrafalaghbari/GA-TCN-LSTM/blob/main/modeling/reference_models/RNN_model.ipynb) |
