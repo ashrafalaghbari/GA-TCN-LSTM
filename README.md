@@ -104,7 +104,7 @@ GA-TCN-LSTM
 
 ## Contact
 
-If you have any questions or encounter any issues running this project, please feel free to [open an issue](https://github.com/ashrafalaghbari/Data-Viz/issues) or contact me directly at [ashrafalaghbari@hotmail.com](mailto:ashrafalaghbari@hotmail.com). I'll be happy to help!
+If you have any questions or encounter any issues running this project, please feel free to [open an issue](https://github.com/ashrafalaghbari/Data-Viz/issues). I'll be happy to help!
 
 
 
