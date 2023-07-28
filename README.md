@@ -75,10 +75,6 @@ To access the dataset, please visit the following link: https://www.equinor.com/
 Please note that the raw data is subject to the terms and conditions outlined on the Equinor website.
 
 ## Tech Stack
-
-
-
-GA-TCN-LSTM
 =======
 
 [![Made with Python](https://img.shields.io/badge/Made%20with-Python%203.10.7-blue.svg)](https://www.python.org/)
